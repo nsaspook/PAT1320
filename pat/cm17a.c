@@ -37,134 +37,134 @@ void cm17a_delay(unsigned char);
 #define	CODE_HOUSE		'M'
 #define	CODE_DEVICE		6
 
-volatile	unsigned long	x10_cmdcount;
+volatile unsigned long x10_cmdcount;
 
 rom const unsigned int houseCode[16] = {
-        0x6000,  // A
-        0x7000,  // B
-        0x4000,  // C
-        0x5000,  // D
-        0x8000,  // E
-        0x9000,  // F
-        0xA000,  // G
-        0xB000,  // H
-        0xE000,  // I
-        0xF000,  // J
-        0xC000,  // K
-        0xD000,  // L
-        0x0000,  // M
-        0x1000,  // N
-        0x2000,  // O
-        0x3000,  // P
+	0x6000, // A
+	0x7000, // B
+	0x4000, // C
+	0x5000, // D
+	0x8000, // E
+	0x9000, // F
+	0xA000, // G
+	0xB000, // H
+	0xE000, // I
+	0xF000, // J
+	0xC000, // K
+	0xD000, // L
+	0x0000, // M
+	0x1000, // N
+	0x2000, // O
+	0x3000, // P
 };
 
 rom const unsigned int deviceCode[16] = {
-        0x0000,  // 1
-        0x0010,  // 2
-        0x0008,  // 3
-        0x0018,  // 4
-        0x0040,  // 5
-        0x0050,  // 6
-        0x0048,  // 7
-        0x0058,  // 8
-        0x0400,  // 9
-        0x0410,  // 10
-        0x0408,  // 11
-        0x0418,  // 12
-        0x0440,  // 13
-        0x0450,  // 14
-        0x0448,  // 15
-        0x0458,  // 16
+	0x0000, // 1
+	0x0010, // 2
+	0x0008, // 3
+	0x0018, // 4
+	0x0040, // 5
+	0x0050, // 6
+	0x0048, // 7
+	0x0058, // 8
+	0x0400, // 9
+	0x0410, // 10
+	0x0408, // 11
+	0x0418, // 12
+	0x0440, // 13
+	0x0450, // 14
+	0x0448, // 15
+	0x0458, // 16
 };
 
 rom const unsigned int cmndCode[] = {
-        0x0000,  // ON
-        0x0020,  // OFF
-        0x0088,  // 20% BRIGHT (0x00A8=5%)
-        0x0098,  // 20% DIM    (0x00B8=5%)
+	0x0000, // ON
+	0x0020, // OFF
+	0x0088, // 20% BRIGHT (0x00A8=5%)
+	0x0098, // 20% DIM    (0x00B8=5%)
 };
 
-void cm17a_delay(unsigned char dtime)		// really slow data rate for transmitted symbols and spacing
+void cm17a_delay(unsigned char dtime) // really slow data rate for transmitted symbols and spacing
 {
-unsigned char	bit_delay;
+	unsigned char bit_delay;
 
-		for (bit_delay=0; bit_delay<X10_DELAY;bit_delay++) {	// Change X10_DELAY to match speed of PIC processor, 3 works with 8MHZ PIC18F1320 internal clock
-        	Delay1KTCYx(dtime);
-		}
+	for (bit_delay = 0; bit_delay < X10_DELAY; bit_delay++) { // Change X10_DELAY to match speed of PIC processor, 3 works with 8MHZ PIC18F1320 internal clock
+		Delay1KTCYx(dtime);
+	}
 }
 
 void setup_cm17a(void)
 {
-        CM17A_PORT_OUT=CM17A_PINS;		// set cm17a port to digital outout for CM17A control
-        RTS_pin=0;
-		DTR_pin=0;
-		BELL=0;		// set cm17a port to all lows to reset module and bell
+	CM17A_PORT_OUT = CM17A_PINS; // set cm17a port to digital outout for CM17A control
+	RTS_pin = 0;
+	DTR_pin = 0;
+	BELL = 0; // set cm17a port to all lows to reset module and bell
 }
 
-void loop_cm17a(void)    // Sample Commands
+void loop_cm17a(void) // Sample Commands
 {
-        cm17a_delay(200);
-        xmitCM17A(CODE_HOUSE,CODE_DEVICE,ON,1);
-        xmitCM17A(CODE_HOUSE,CODE_DEVICE,ON,1);
-        xmitCM17A(CODE_HOUSE,CODE_DEVICE,ON,1);
-        xmitCM17A(CODE_HOUSE,CODE_DEVICE,OFF,1);
-        xmitCM17A(CODE_HOUSE,CODE_DEVICE,OFF,1);
-        xmitCM17A(CODE_HOUSE,CODE_DEVICE,OFF,1);
+	cm17a_delay(200);
+	xmitCM17A(CODE_HOUSE, CODE_DEVICE, ON, 1);
+	xmitCM17A(CODE_HOUSE, CODE_DEVICE, ON, 1);
+	xmitCM17A(CODE_HOUSE, CODE_DEVICE, ON, 1);
+	xmitCM17A(CODE_HOUSE, CODE_DEVICE, OFF, 1);
+	xmitCM17A(CODE_HOUSE, CODE_DEVICE, OFF, 1);
+	xmitCM17A(CODE_HOUSE, CODE_DEVICE, OFF, 1);
 }
 
 void xmitCM17A(char house, unsigned char device, unsigned char cmnd, unsigned char repeat)
 {
-unsigned char i;
-for (i=0;i<=repeat; i++) xmitCM17A_cmd(house,device,cmnd);
+	unsigned char i;
+	for (i = 0; i <= repeat; i++) xmitCM17A_cmd(house, device, cmnd);
 }
 
 void xmitCM17A_cmd(char house, unsigned char device, unsigned char cmnd)
 {
-        unsigned int dataBuff = 0;
-        unsigned char messageBuff[5],i,mask;
+	unsigned int dataBuff = 0;
+	unsigned char messageBuff[5], i, mask;
 
-		x10_cmdcount++;
-        // Build Message by ORing the parts together. No device if Bright or Dim
-        if (cmnd == ON | cmnd == OFF) {
-                dataBuff = (houseCode[house-'A'] | deviceCode[device-1] | cmndCode[cmnd]);
-        } else {
-                dataBuff = houseCode[house-'A'] | cmndCode[cmnd];
-        }
+	x10_cmdcount++;
+	// Build Message by ORing the parts together. No device if Bright or Dim
+	if (cmnd == ON | cmnd == OFF) {
+		dataBuff = (houseCode[house - 'A'] | deviceCode[device - 1] | cmndCode[cmnd]);
+	} else {
+		dataBuff = houseCode[house - 'A'] | cmndCode[cmnd];
+	}
 
-        // Build a string for the whole message . . .
-        messageBuff[0] = 0xD5;               // Header byte 0 11010101 = 0xD5
-        messageBuff[1] = 0xAA;               // Header byte 1 10101010 = 0xAA
-        messageBuff[2] = dataBuff >> 8;      // MSB of dataBuff
-        messageBuff[3] = dataBuff & 0xFF;    // LSB of dataBuff
-        messageBuff[4] = 0xAD;               // Footer byte 10101101 = 0xAD
+	// Build a string for the whole message . . .
+	messageBuff[0] = 0xD5; // Header byte 0 11010101 = 0xD5
+	messageBuff[1] = 0xAA; // Header byte 1 10101010 = 0xAA
+	messageBuff[2] = dataBuff >> 8; // MSB of dataBuff
+	messageBuff[3] = dataBuff & 0xFF; // LSB of dataBuff
+	messageBuff[4] = 0xAD; // Footer byte 10101101 = 0xAD
 
-        // Now send it out to CM17A . . .
-        DTR_pin=LOW;	       // reset device - both low is power off
-        RTS_pin=LOW;
-        cm17a_delay(BIT_DELAY);
+	// Now send it out to CM17A . . .
+	DTR_pin = LOW; // reset device - both low is power off
+	RTS_pin = LOW;
+	cm17a_delay(BIT_DELAY);
 
-        DTR_pin=HIGH;	       // standby mode - supply power
-        RTS_pin=HIGH;
-        cm17a_delay(35);                           // need extra time for it to settle
+	DTR_pin = HIGH; // standby mode - supply power
+	RTS_pin = HIGH;
+	cm17a_delay(35); // need extra time for it to settle
 
-        for (i=0;i<5;i++) {
-                for ( mask = 0x80; mask; mask >>=1) {
-                        if ( mask & messageBuff[i]) {
-                                DTR_pin=LOW;  // 1 = RTS HIGH/DTR-LOW
-                        } else {
-                                RTS_pin=LOW;  // 0 = DTR-HIGH/RTS-LOW
-                        }
-                        cm17a_delay(BIT_DELAY);                // delay between bits
+	for (i = 0; i < 5; i++) {
+		for (mask = 0x80; mask; mask >>= 1) {
+			if (mask & messageBuff[i]) {
+				DTR_pin = LOW; // 1 = RTS HIGH/DTR-LOW
+			} else {
+				RTS_pin = LOW; // 0 = DTR-HIGH/RTS-LOW
+			}
+			cm17a_delay(BIT_DELAY); // delay between bits
 
-                        DTR_pin=HIGH;      // wait state between bits
-                        RTS_pin=HIGH;
-                        cm17a_delay(BIT_DELAY);
-                }
-        }
-        cm17a_delay(100);                      	// wait required before next xmit
-        DTR_pin=LOW;	       				// reset device - both low is power off
-        RTS_pin=LOW;
-        cm17a_delay(BIT_DELAY);
+			DTR_pin = HIGH; // wait state between bits
+			RTS_pin = HIGH;
+			cm17a_delay(BIT_DELAY);
+		}
+	}
+	cm17a_delay(100); // wait required before next xmit
+	DTR_pin = LOW; // reset device - both low is power off
+	RTS_pin = LOW;
+	cm17a_delay(BIT_DELAY);
 }
 
 

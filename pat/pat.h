@@ -12,7 +12,7 @@
 #define SW4			PORTAbits.RA3
 
 #define	LEDPORT		CM17A_PORT_OUT	// led port output is HIGH when lit
-#define	LEDPORT_IO	CM17A_PINS		// Use CM17A port for LEDS
+#define	LEDPORT_IO	CM17A_PINS	// Use CM17A port for LEDS
 #define LED1		LATBbits.LATB4
 #define LED2		LATBbits.LATB5
 #define LED3		LATBbits.LATB6
